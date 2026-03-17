@@ -55,6 +55,7 @@ const SubmitReport = () => {
 
   const [trackingId, setTrackingId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [selectedFileName, setSelectedFileName] = useState('');
   const navigate = useNavigate();
 
@@ -84,6 +85,7 @@ const SubmitReport = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError("");
     
     // Combine date and time
     const finalIncidentTime = `${incidentDate}T${incidentTime}`;
@@ -96,6 +98,7 @@ const SubmitReport = () => {
       setStep(4);
     } catch (error) {
       console.error(error);
+      setSubmitError(error.response?.data?.error || error.message || "Failed to connect to the secure server.");
       setIsSubmitting(false);
     }
   };
@@ -304,6 +307,11 @@ const SubmitReport = () => {
                   {isSubmitting ? "Securing Report..." : "Submit Anonymously"}
                 </button>
               </div>
+              {submitError && (
+                <div className="error-text mt-2" style={{color: 'var(--danger)', textAlign: 'center'}}>
+                  {submitError}
+                </div>
+              )}
             </div>
           )}
 

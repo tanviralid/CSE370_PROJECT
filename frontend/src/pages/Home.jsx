@@ -62,33 +62,39 @@ const Home = () => {
               attribution='&copy; OpenStreetMap contributors'
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
-            {heatmapData.map((area) => (
-              <Circle
-                key={area.Area_id}
-                center={[area.lat, area.lng]}
-                pathOptions={{ 
-                  color: getRiskColor(area.risk_level), 
-                  fillColor: getRiskColor(area.risk_level), 
-                  fillOpacity: 0.4
-                }}
-                radius={area.total_incidents * 2000 + 4000} // Dynamic radius based on incident count
-                className="pulse-circle"
-              >
-                <Popup className="custom-popup">
-                  <div className="popup-content">
-                    <h3>{area.thana}, {area.district}</h3>
-                    <div className="popup-stat">
-                      <span>Risk Level:</span>
-                      <strong style={{color: getRiskColor(area.risk_level)}}>{area.risk_level}</strong>
+            {heatmapData.map((area) => {
+              // Provide fallback coordinates if the backend doesn't supply them yet
+              const lat = area.lat || 23.7925 + (Math.random() * 0.1 - 0.05);
+              const lng = area.lng || 90.4078 + (Math.random() * 0.1 - 0.05);
+              
+              return (
+                <Circle
+                  key={area.Area_id}
+                  center={[lat, lng]}
+                  pathOptions={{ 
+                    color: getRiskColor(area.risk_level), 
+                    fillColor: getRiskColor(area.risk_level), 
+                    fillOpacity: 0.4
+                  }}
+                  radius={area.total_incidents * 2000 + 4000} // Dynamic radius based on incident count
+                  className="pulse-circle"
+                >
+                  <Popup className="custom-popup">
+                    <div className="popup-content">
+                      <h3>{area.thana}, {area.district}</h3>
+                      <div className="popup-stat">
+                        <span>Risk Level:</span>
+                        <strong style={{color: getRiskColor(area.risk_level)}}>{area.risk_level}</strong>
+                      </div>
+                      <div className="popup-stat">
+                        <span>Total Incidents:</span>
+                        <strong>{area.total_incidents}</strong>
+                      </div>
                     </div>
-                    <div className="popup-stat">
-                      <span>Total Incidents:</span>
-                      <strong>{area.total_incidents}</strong>
-                    </div>
-                  </div>
-                </Popup>
-              </Circle>
-            ))}
+                  </Popup>
+                </Circle>
+              );
+            })}
           </MapContainer>
         )}
       </div>

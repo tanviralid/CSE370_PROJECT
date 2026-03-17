@@ -89,18 +89,22 @@ const Dashboard = () => {
             <h3>District Crime Saturation</h3>
           </div>
           <div className="bar-chart-container">
-            {stats.districtStats.map(stat => (
-              <div key={stat.district} className="bar-row">
-                <span className="bar-label">{stat.district}</span>
-                <div className="bar-track">
-                  <div 
-                    className="bar-fill blue-gradient" 
-                    style={{ width: `${(stat.total_crirmed / getMaxStat(stats.districtStats, 'total_crirmed')) * 100}%` }}
-                  ></div>
+            {stats.districtStats.map(stat => {
+              const maxDistStat = getMaxStat(stats.districtStats, 'total_crimes');
+              const fillWidth = maxDistStat === 0 ? 0 : (stat.total_crimes / maxDistStat) * 100;
+              return (
+                <div key={stat.district} className="bar-row">
+                  <span className="bar-label">{stat.district}</span>
+                  <div className="bar-track">
+                    <div 
+                      className="bar-fill blue-gradient" 
+                      style={{ width: `${fillWidth}%` }}
+                    ></div>
+                  </div>
+                  <span className="bar-value">{stat.total_crimes}</span>
                 </div>
-                <span className="bar-value">{stat.total_crirmed}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -111,18 +115,22 @@ const Dashboard = () => {
             <h3>Dominant Crime Vectors</h3>
           </div>
           <div className="bar-chart-container">
-            {stats.crimeTypes.map(stat => (
-              <div key={stat.crime_type} className="bar-row">
-                <span className="bar-label">{stat.crime_type}</span>
-                <div className="bar-track">
-                  <div 
-                    className="bar-fill purple-gradient" 
-                    style={{ width: `${(stat.count / getMaxStat(stats.crimeTypes, 'count')) * 100}%` }}
-                  ></div>
+            {stats.crimeTypes.map(stat => {
+              const maxCrimeStat = getMaxStat(stats.crimeTypes, 'count');
+              const fillWidthCrime = maxCrimeStat === 0 ? 0 : (stat.count / maxCrimeStat) * 100;
+              return (
+                <div key={stat.crime_type} className="bar-row">
+                  <span className="bar-label">{stat.crime_type}</span>
+                  <div className="bar-track">
+                    <div 
+                      className="bar-fill purple-gradient" 
+                      style={{ width: `${fillWidthCrime}%` }}
+                    ></div>
+                  </div>
+                  <span className="bar-value">{stat.count}</span>
                 </div>
-                <span className="bar-value">{stat.count}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

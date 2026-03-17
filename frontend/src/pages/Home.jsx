@@ -64,8 +64,30 @@ const Home = () => {
             />
             {heatmapData.map((area) => {
               // Provide fallback coordinates if the backend doesn't supply them yet
-              const lat = area.lat || 23.7925 + (Math.random() * 0.1 - 0.05);
-              const lng = area.lng || 90.4078 + (Math.random() * 0.1 - 0.05);
+              const districtCoordinates = {
+                "Dhaka": { lat: 23.8103, lng: 90.4125 },
+                "Chattogram": { lat: 22.3569, lng: 91.7832 },
+                "Sylhet": { lat: 24.8949, lng: 91.8687 },
+                "Rajshahi": { lat: 24.3745, lng: 88.6042 },
+                "Khulna": { lat: 22.8456, lng: 89.5403 },
+                "Barishal": { lat: 22.7010, lng: 90.3535 },
+                "Rangpur": { lat: 25.7439, lng: 89.2752 },
+                "Mymensingh": { lat: 24.7471, lng: 90.4203 },
+                "Gazipur": { lat: 23.9999, lng: 90.4203 },
+                "Narayanganj": { lat: 23.6238, lng: 90.5000 },
+                "Cox's Bazar": { lat: 21.4272, lng: 92.0058 },
+                "Moulvibazar": { lat: 24.4829, lng: 91.7774 },
+                "Bogra": { lat: 24.8465, lng: 89.3778 },
+                "Jessore": { lat: 23.1634, lng: 89.2182 },
+                "Dinajpur": { lat: 25.6217, lng: 88.6358 }
+              };
+              
+              // Get base district coordinate or default to center of Bangladesh
+              const baseCoords = districtCoordinates[area.district] || { lat: 23.6850, lng: 90.3563 };
+              
+              // Add slight random offset based on Area_id so dots in same district spread out
+              const lat = area.lat || baseCoords.lat + (Math.sin(area.Area_id * 10) * 0.05);
+              const lng = area.lng || baseCoords.lng + (Math.cos(area.Area_id * 10) * 0.05);
               
               return (
                 <Circle

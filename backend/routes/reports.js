@@ -8,6 +8,24 @@ function generateTrackingId() {
     return 'SCB-' + crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
+// GET: Heatmap data (aggregate counts per area)
+router.get('/heatmap', async (req, res) => {
+    try {
+        // Dynamic Geographic Heat Intelligence Engine using simple aggregation
+        const [rows] = await db.query(`
+            SELECT a.Area_id, a.district, a.thana, a.risk_level, COUNT(c.report_id) as total_incidents
+            FROM Area a
+            LEFT JOIN Crime_report c ON a.Area_id = c.area_id
+            GROUP BY a.Area_id, a.district, a.thana, a.risk_level
+        `);
+
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // POST: Submit a new crime report (with Incident Grouping)
 router.post('/', async (req, res) => {
     const { crime_type, incident_time, victim_witness, district, thana } = req.body;
@@ -57,8 +75,8 @@ router.post('/', async (req, res) => {
             [newTrackingId, crime_type, incident_time, victim_witness, area_id, groupId]
         );
 
-        res.status(201).json({ 
-            message: 'Report submitted successfully', 
+        res.status(201).json({
+            message: 'Report submitted successfully',
             tracking_id: newTrackingId,
             report_id: insertReportResult.insertId
         });
@@ -114,11 +132,11 @@ router.get('/:trackingId', async (req, res) => {
 // POST: Community Verification Voting
 router.post('/:trackingId/vote', async (req, res) => {
     const { vote_type } = req.body; // 'Likely True', 'Needs Verification', 'Suspicious'
-    
+
     try {
         // Find report ID
         const [reportRows] = await db.query('SELECT report_id FROM Crime_report WHERE tracking_id = ?', [req.params.trackingId]);
-        
+
         if (reportRows.length === 0) {
             return res.status(404).json({ error: 'Report not found' });
         }

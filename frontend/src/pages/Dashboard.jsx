@@ -103,7 +103,7 @@ const Dashboard = () => {
   };
 
   const getRiskColor = (risk) => {
-    switch(risk) {
+    switch (risk) {
       case 'High': return '#ef4444';
       case 'Moderate': return '#f59e0b';
       default: return '#10b981';
@@ -127,7 +127,7 @@ const Dashboard = () => {
           { id: 'users', label: 'User Management', icon: <Users size={16} /> },
           { id: 'areas', label: 'Area Risk Control', icon: <MapPin size={16} /> }
         ].map(tab => (
-          <button 
+          <button
             key={tab.id}
             className={`admin-tab ${activeTab === tab.id ? 'active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
@@ -185,8 +185,8 @@ const Dashboard = () => {
                     <div key={stat.district} className="bar-row">
                       <span className="bar-label">{stat.district}</span>
                       <div className="bar-track">
-                        <div 
-                          className="bar-fill blue-gradient" 
+                        <div
+                          className="bar-fill blue-gradient"
                           style={{ width: `${(stat.total_crimes / getMaxStat(stats.districtStats, 'total_crimes')) * 100}%` }}
                         ></div>
                       </div>
@@ -210,8 +210,8 @@ const Dashboard = () => {
                     <div key={stat.crime_type} className="bar-row">
                       <span className="bar-label">{stat.crime_type}</span>
                       <div className="bar-track">
-                        <div 
-                          className="bar-fill purple-gradient" 
+                        <div
+                          className="bar-fill purple-gradient"
                           style={{ width: `${(stat.count / getMaxStat(stats.crimeTypes, 'count')) * 100}%` }}
                         ></div>
                       </div>
@@ -263,14 +263,14 @@ const Dashboard = () => {
                     </td>
                     <td style={{ padding: '0.75rem 1rem' }}>
                       {u.user_id !== user.user_id && (
-                        <button 
+                        <button
                           onClick={() => handleDeleteUser(u.user_id)}
-                          style={{ 
-                            background: 'rgba(239, 68, 68, 0.15)', 
-                            border: '1px solid rgba(239, 68, 68, 0.3)', 
-                            color: '#ef4444', 
-                            padding: '0.35rem 0.75rem', 
-                            borderRadius: '6px', 
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            color: '#ef4444',
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: '6px',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -298,7 +298,7 @@ const Dashboard = () => {
               <MapPin size={18} className="icon-accent" />
               <h3>Area Risk Management ({areas.length} zones)</h3>
             </div>
-            <button 
+            <button
               className="btn-primary"
               onClick={handleRecalcRisk}
               style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}

@@ -55,7 +55,7 @@ const Home = () => {
   }, []);
 
   const getRiskColor = (risk_level) => {
-    switch(risk_level) {
+    switch (risk_level) {
       case 'High': return '#ef4444'; // var(--danger)
       case 'Moderate': return '#f59e0b'; // var(--warning)
       case 'Low': return '#10b981'; // var(--accent)
@@ -71,16 +71,16 @@ const Home = () => {
           <p className="subtitle">Dynamic Geographic Heat Intelligence Engine</p>
         </div>
         <div className="header-actions">
-          <select 
-            className="btn-secondary glass-panel" 
-            value={riskFilter} 
+          <select
+            className="btn-secondary glass-panel"
+            value={riskFilter}
             onChange={(e) => setRiskFilter(e.target.value)}
             style={{ padding: '0.5rem 1rem', background: 'rgba(255, 255, 255, 0.1)', color: 'white', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', cursor: 'pointer' }}
           >
-            <option value="All" style={{color: 'black'}}>All Risks</option>
-            <option value="High" style={{color: 'black'}}>High Risk</option>
-            <option value="Moderate" style={{color: 'black'}}>Moderate Risk</option>
-            <option value="Low" style={{color: 'black'}}>Low Risk</option>
+            <option value="All" style={{ color: 'black' }}>All Risks</option>
+            <option value="High" style={{ color: 'black' }}>High Risk</option>
+            <option value="Moderate" style={{ color: 'black' }}>Moderate Risk</option>
+            <option value="Low" style={{ color: 'black' }}>Low Risk</option>
           </select>
           <div className="status-badge glass-panel">
             <Activity className="pulse-icon" size={16} color="#10b981" />
@@ -93,9 +93,9 @@ const Home = () => {
         {loading ? (
           <div className="loading-state">Loading intelligence data...</div>
         ) : (
-          <MapContainer 
-            center={[23.6850, 90.3563]} 
-            zoom={7} 
+          <MapContainer
+            center={[23.6850, 90.3563]}
+            zoom={7}
             className="leaflet-map"
           >
             <TileLayer
@@ -106,9 +106,9 @@ const Home = () => {
               <Circle
                 key={area.Area_id || Math.random()}
                 center={[area.lat, area.lng]}
-                pathOptions={{ 
-                  color: getRiskColor(area.risk_level), 
-                  fillColor: getRiskColor(area.risk_level), 
+                pathOptions={{
+                  color: getRiskColor(area.risk_level),
+                  fillColor: getRiskColor(area.risk_level),
                   fillOpacity: 0.4
                 }}
                 radius={area.total_incidents ? area.total_incidents * 2000 + 4000 : 4000} // Dynamic radius based on incident count
@@ -119,7 +119,7 @@ const Home = () => {
                     <h3>{area.thana}, {area.district}</h3>
                     <div className="popup-stat">
                       <span>Risk Level:</span>
-                      <strong style={{color: getRiskColor(area.risk_level)}}>{area.risk_level}</strong>
+                      <strong style={{ color: getRiskColor(area.risk_level) }}>{area.risk_level}</strong>
                     </div>
                     <div className="popup-stat">
                       <span>Total Incidents:</span>
@@ -132,7 +132,7 @@ const Home = () => {
           </MapContainer>
         )}
       </div>
-      
+
       <div className="legend glass-panel">
         <h4>Risk Indicator</h4>
         <div className="legend-items">

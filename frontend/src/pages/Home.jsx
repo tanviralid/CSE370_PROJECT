@@ -7,15 +7,47 @@ import './Home.css';
 const Home = () => {
   const [heatmapData, setHeatmapData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [riskFilter, setRiskFilter] = useState('All');
+
+  const coordinateMap = {
+    "Dhaka": { lat: 23.8103, lng: 90.4125 },
+    "Gazipur": { lat: 24.0023, lng: 90.4264 },
+    "Narayanganj": { lat: 23.6238, lng: 90.5000 },
+    "Chattogram": { lat: 22.3569, lng: 91.7832 },
+    "Cox's Bazar": { lat: 21.4272, lng: 92.0058 },
+    "Sylhet": { lat: 24.8949, lng: 91.8687 },
+    "Moulvibazar": { lat: 24.4843, lng: 91.7685 },
+    "Rajshahi": { lat: 24.3636, lng: 88.6241 },
+    "Bogra": { lat: 24.8465, lng: 89.3778 },
+    "Khulna": { lat: 22.8456, lng: 89.5403 },
+    "Jessore": { lat: 23.1664, lng: 89.2082 },
+    "Barishal": { lat: 22.7010, lng: 90.3535 },
+    "Rangpur": { lat: 25.7439, lng: 89.2752 },
+    "Dinajpur": { lat: 25.6217, lng: 88.6355 },
+    "Mymensingh": { lat: 24.7471, lng: 90.4203 }
+  };
 
   useEffect(() => {
     const fetchHeatmapData = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/reports/heatmap');
-        setHeatmapData(res.data);
+        const res = await axios.get('http://localhost:5000/api/reports/data/heatmap');
+        if (Array.isArray(res.data)) {
+          const dataWithCoords = res.data.map(area => {
+            const coords = coordinateMap[area.district] || { lat: 23.6850, lng: 90.3563 };
+            return {
+              ...area,
+              lat: coords.lat + (Math.random() - 0.5) * 0.1,
+              lng: coords.lng + (Math.random() - 0.5) * 0.1
+            };
+          });
+          setHeatmapData(dataWithCoords);
+        } else {
+          setHeatmapData([]);
+        }
         setLoading(false);
       } catch (err) {
-        console.error(err);
+        console.error("Heatmap fetch error:", err);
+        setHeatmapData([]);
         setLoading(false);
       }
     };
@@ -39,9 +71,17 @@ const Home = () => {
           <p className="subtitle">Dynamic Geographic Heat Intelligence Engine</p>
         </div>
         <div className="header-actions">
-          <button className="btn-secondary glass-panel">
-            <Filter size={16} /> Filters
-          </button>
+          <select 
+            className="btn-secondary glass-panel" 
+            value={riskFilter} 
+            onChange={(e) => setRiskFilter(e.target.value)}
+            style={{ padding: '0.5rem 1rem', background: 'rgba(255, 255, 255, 0.1)', color: 'white', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', cursor: 'pointer' }}
+          >
+            <option value="All" style={{color: 'black'}}>All Risks</option>
+            <option value="High" style={{color: 'black'}}>High Risk</option>
+            <option value="Moderate" style={{color: 'black'}}>Moderate Risk</option>
+            <option value="Low" style={{color: 'black'}}>Low Risk</option>
+          </select>
           <div className="status-badge glass-panel">
             <Activity className="pulse-icon" size={16} color="#10b981" />
             <span>Live System Active</span>
@@ -62,16 +102,16 @@ const Home = () => {
               attribution='&copy; OpenStreetMap contributors'
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
-            {heatmapData.map((area) => (
+            {heatmapData.filter(area => riskFilter === 'All' || area.risk_level === riskFilter).map((area) => (
               <Circle
-                key={area.Area_id}
+                key={area.Area_id || Math.random()}
                 center={[area.lat, area.lng]}
                 pathOptions={{ 
                   color: getRiskColor(area.risk_level), 
                   fillColor: getRiskColor(area.risk_level), 
                   fillOpacity: 0.4
                 }}
-                radius={area.total_incidents * 2000 + 4000} // Dynamic radius based on incident count
+                radius={area.total_incidents ? area.total_incidents * 2000 + 4000 : 4000} // Dynamic radius based on incident count
                 className="pulse-circle"
               >
                 <Popup className="custom-popup">
@@ -83,7 +123,7 @@ const Home = () => {
                     </div>
                     <div className="popup-stat">
                       <span>Total Incidents:</span>
-                      <strong>{area.total_incidents}</strong>
+                      <strong>{area.total_incidents || 0}</strong>
                     </div>
                   </div>
                 </Popup>

@@ -84,9 +84,32 @@ const SubmitReport = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const currentDateStr = `${yyyy}-${mm}-${dd}`;
     
-    // Combine date and time
-    const finalIncidentTime = `${incidentDate}T${incidentTime}`;
+    if (incidentDate > currentDateStr) {
+      alert("You cannot select a date in the future.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (incidentDate === currentDateStr) {
+      const hh = String(today.getHours()).padStart(2, '0');
+      const min = String(today.getMinutes()).padStart(2, '0');
+      const currentTimeStr = `${hh}:${min}`;
+      if (incidentTime > currentTimeStr) {
+        alert("You cannot select a time in the future for today.");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    // Combine date and time for MySQL DATETIME format (YYYY-MM-DD HH:MM:SS)
+    const finalIncidentTime = `${incidentDate} ${incidentTime}:00`;
     const submissionData = { ...formData, incident_time: finalIncidentTime };
 
     try {
@@ -97,8 +120,19 @@ const SubmitReport = () => {
     } catch (error) {
       console.error(error);
       setIsSubmitting(false);
+      alert('Failed to submit report. Please check your connection or try again. Error: ' + (error.response?.data?.error || error.message));
     }
   };
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayDate = `${yyyy}-${mm}-${dd}`;
+  
+  const hh = String(today.getHours()).padStart(2, '0');
+  const min = String(today.getMinutes()).padStart(2, '0');
+  const currentTime = `${hh}:${min}`;
 
   return (
     <div className="submit-container anim-fade-in">
@@ -225,6 +259,7 @@ const SubmitReport = () => {
                     type="date" 
                     className="glass-input"
                     value={incidentDate}
+                    max={todayDate}
                     onChange={(e) => setIncidentDate(e.target.value)}
                   />
                 </div>
@@ -234,6 +269,7 @@ const SubmitReport = () => {
                     type="time" 
                     className="glass-input"
                     value={incidentTime}
+                    max={incidentDate === todayDate ? currentTime : undefined}
                     onChange={(e) => setIncidentTime(e.target.value)}
                   />
                 </div>

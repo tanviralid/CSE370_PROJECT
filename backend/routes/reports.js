@@ -10,22 +10,21 @@ function generateTrackingId() {
 
 // POST: Submit a new crime report (with Incident Grouping)
 router.post('/', async (req, res) => {
-    const { crime_type, incident_time, victim_witness, area_id } = req.body;
+    const { crime_type, incident_time, victim_witness, district, thana } = req.body;
     let newTrackingId = generateTrackingId();
 
     try {
-        // Grouping logic: find reports in same area within last 2 hours
-        // For simplicity, we just find if there is an existing 'Incident_Group' nearby in time, but the EER has 'location' string instead of area_id in incident group.
-        // Wait, Incident_Group has `location`, `time`, `total_reports`.
-        // Let's check for an Incident_Group that matches the location (we can map area_id to string district/thana, or just join)
-        
-        // 1. Get area details first to form the 'location' string
-        const [areaRows] = await db.query('SELECT district, thana FROM Area WHERE Area_id = ?', [area_id]);
-        if (areaRows.length === 0) {
-            return res.status(400).json({ error: 'Invalid area_id' });
+        // 1. Get or Create Area
+        let area_id;
+        const [areaRows] = await db.query('SELECT Area_id FROM Area WHERE district = ? AND thana = ?', [district, thana]);
+        if (areaRows.length > 0) {
+            area_id = areaRows[0].Area_id;
+        } else {
+            const [insertAreaResult] = await db.query('INSERT INTO Area (district, thana) VALUES (?, ?)', [district, thana]);
+            area_id = insertAreaResult.insertId;
         }
-        
-        const areaStr = areaRows[0].thana + ', ' + areaRows[0].district;
+
+        const areaStr = thana + ', ' + district;
         let groupId = null;
 
         // 2. Check for recent groups at this location (e.g., within 3 hours)
@@ -64,6 +63,25 @@ router.post('/', async (req, res) => {
             report_id: insertReportResult.insertId
         });
 
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// GET: Heatmap data (aggregate counts per area)
+// IMPORTANT: This must be defined BEFORE /:trackingId to avoid being caught by that wildcard
+router.get('/data/heatmap', async (req, res) => {
+    try {
+        // Dynamic Geographic Heat Intelligence Engine using simple aggregation
+        const [rows] = await db.query(`
+            SELECT a.Area_id, a.district, a.thana, a.risk_level, COUNT(c.report_id) as total_incidents
+            FROM Area a
+            LEFT JOIN Crime_report c ON a.Area_id = c.area_id
+            GROUP BY a.Area_id, a.district, a.thana, a.risk_level
+        `);
+
+        res.json(rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -114,24 +132,6 @@ router.post('/:trackingId/vote', async (req, res) => {
         );
 
         res.json({ message: 'Vote submitted successfully' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// GET: Heatmap data (aggregate counts per area)
-router.get('/data/heatmap', async (req, res) => {
-    try {
-        // Dynamic Geographic Heat Intelligence Engine using simple aggregation
-        const [rows] = await db.query(`
-            SELECT a.Area_id, a.district, a.thana, a.risk_level, COUNT(c.report_id) as total_incidents
-            FROM Area a
-            LEFT JOIN Crime_report c ON a.Area_id = c.area_id
-            GROUP BY a.Area_id, a.district, a.thana, a.risk_level
-        `);
-
-        res.json(rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });

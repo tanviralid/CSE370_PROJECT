@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const crypto = require('crypto');
+const { calculateAndUpdateRiskLevels } = require('../utils/riskEngine');
 
 // Generate unique tracking ID
 function generateTrackingId() {
@@ -13,10 +14,10 @@ router.get('/heatmap', async (req, res) => {
     try {
         // Dynamic Geographic Heat Intelligence Engine using simple aggregation
         const [rows] = await db.query(`
-            SELECT a.Area_id, a.district, a.thana, a.risk_level, COUNT(c.report_id) as total_incidents
+            SELECT a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden, COUNT(c.report_id) as total_incidents
             FROM Area a
             LEFT JOIN Crime_report c ON a.Area_id = c.area_id
-            GROUP BY a.Area_id, a.district, a.thana, a.risk_level
+            GROUP BY a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden
         `);
 
         res.json(rows);
@@ -75,6 +76,9 @@ router.post('/', async (req, res) => {
             [newTrackingId, crime_type, incident_time, victim_witness, area_id, groupId]
         );
 
+        // 4. Automatically recalculate risk levels to ensure the intelligence engine is up to date
+        await calculateAndUpdateRiskLevels();
+
         res.status(201).json({
             message: 'Report submitted successfully',
             tracking_id: newTrackingId,
@@ -93,10 +97,10 @@ router.get('/data/heatmap', async (req, res) => {
     try {
         // Dynamic Geographic Heat Intelligence Engine using simple aggregation
         const [rows] = await db.query(`
-            SELECT a.Area_id, a.district, a.thana, a.risk_level, COUNT(c.report_id) as total_incidents
+            SELECT a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden, COUNT(c.report_id) as total_incidents
             FROM Area a
             LEFT JOIN Crime_report c ON a.Area_id = c.area_id
-            GROUP BY a.Area_id, a.district, a.thana, a.risk_level
+            GROUP BY a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden
         `);
 
         res.json(rows);

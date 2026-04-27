@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS Area (
     Area_id INT AUTO_INCREMENT PRIMARY KEY,
     district VARCHAR(255) NOT NULL,
     thana VARCHAR(255) NOT NULL,
-    risk_level ENUM('Low', 'Moderate', 'High') DEFAULT 'Low'
+    risk_level ENUM('Low', 'Moderate', 'High') DEFAULT 'Low',
+    is_admin_overridden BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS Incident_Group (

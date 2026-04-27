@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Circle, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
+import L from 'leaflet';
 import axios from 'axios';
 import { Filter, Activity } from 'lucide-react';
 import './Home.css';
@@ -32,15 +34,20 @@ const Home = () => {
       try {
         const res = await axios.get('http://localhost:5000/api/reports/data/heatmap');
         if (Array.isArray(res.data)) {
-          const dataWithCoords = res.data.map(area => {
+          const individualIncidents = [];
+          res.data.forEach(area => {
             const coords = coordinateMap[area.district] || { lat: 23.6850, lng: 90.3563 };
-            return {
-              ...area,
-              lat: coords.lat + (Math.random() - 0.5) * 0.1,
-              lng: coords.lng + (Math.random() - 0.5) * 0.1
-            };
+            const incidentsCount = area.total_incidents || 0;
+            for (let i = 0; i < incidentsCount; i++) {
+              individualIncidents.push({
+                ...area,
+                incident_id: `${area.Area_id}-${i}`,
+                lat: coords.lat + (Math.random() - 0.5) * 0.05,
+                lng: coords.lng + (Math.random() - 0.5) * 0.05
+              });
+            }
           });
-          setHeatmapData(dataWithCoords);
+          setHeatmapData(individualIncidents);
         } else {
           setHeatmapData([]);
         }
@@ -61,6 +68,36 @@ const Home = () => {
       case 'Low': return '#10b981'; // var(--accent)
       default: return '#3b82f6';
     }
+  };
+
+  const createRiskIcon = (risk_level) => {
+    return L.divIcon({
+      className: 'custom-div-icon',
+      html: `<div style="background-color: ${getRiskColor(risk_level)}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px ${getRiskColor(risk_level)};"></div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+  };
+
+  const createClusterCustomIcon = function (cluster) {
+    const markers = cluster.getAllChildMarkers();
+    let hasHigh = false;
+    let hasModerate = false;
+    
+    markers.forEach(m => {
+       const risk = m.options.riskLevel;
+       if (risk === 'High') hasHigh = true;
+       if (risk === 'Moderate') hasModerate = true;
+    });
+    
+    const clusterRisk = hasHigh ? 'High' : (hasModerate ? 'Moderate' : 'Low');
+    const color = getRiskColor(clusterRisk);
+
+    return L.divIcon({
+      html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.8); box-shadow: 0 0 15px ${color}; opacity: 0.85; display: flex; justify-content: center; align-items: center;"></div>`,
+      className: 'custom-cluster-icon',
+      iconSize: L.point(30, 30, true),
+    });
   };
 
   return (
@@ -102,33 +139,32 @@ const Home = () => {
               attribution='&copy; OpenStreetMap contributors'
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
-            {heatmapData.filter(area => riskFilter === 'All' || area.risk_level === riskFilter).map((area) => (
-              <Circle
-                key={area.Area_id || Math.random()}
-                center={[area.lat, area.lng]}
-                pathOptions={{
-                  color: getRiskColor(area.risk_level),
-                  fillColor: getRiskColor(area.risk_level),
-                  fillOpacity: 0.4
-                }}
-                radius={area.total_incidents ? area.total_incidents * 2000 + 4000 : 4000} // Dynamic radius based on incident count
-                className="pulse-circle"
-              >
-                <Popup className="custom-popup">
-                  <div className="popup-content">
-                    <h3>{area.thana}, {area.district}</h3>
-                    <div className="popup-stat">
-                      <span>Risk Level:</span>
-                      <strong style={{ color: getRiskColor(area.risk_level) }}>{area.risk_level}</strong>
+            <MarkerClusterGroup
+              chunkedLoading
+              iconCreateFunction={createClusterCustomIcon}
+              maxClusterRadius={60}
+            >
+              {heatmapData.filter(incident => riskFilter === 'All' || incident.risk_level === riskFilter).map((incident) => (
+                <Marker
+                  key={incident.incident_id}
+                  position={[incident.lat, incident.lng]}
+                  icon={createRiskIcon(incident.risk_level)}
+                  riskLevel={incident.risk_level}
+                >
+                  <Popup className="custom-popup">
+                    <div className="popup-content">
+                      <h3>{incident.thana}, {incident.district}</h3>
+                      <div className="popup-stat">
+                        <span>Risk Level:</span>
+                        <strong style={{ color: getRiskColor(incident.risk_level) }}>
+                          {incident.risk_level} {incident.is_admin_overridden ? <span title="Manually overridden by admin">⚠️</span> : null}
+                        </strong>
+                      </div>
                     </div>
-                    <div className="popup-stat">
-                      <span>Total Incidents:</span>
-                      <strong>{area.total_incidents || 0}</strong>
-                    </div>
-                  </div>
-                </Popup>
-              </Circle>
-            ))}
+                  </Popup>
+                </Marker>
+              ))}
+            </MarkerClusterGroup>
           </MapContainer>
         )}
       </div>

@@ -67,7 +67,7 @@ const Dashboard = () => {
   const handleRiskChange = async (areaId, newRisk) => {
     try {
       await axios.put(`http://localhost:5000/api/analytics/area/${areaId}/risk`, { risk_level: newRisk });
-      setAreas(areas.map(a => a.Area_id === areaId ? { ...a, risk_level: newRisk } : a));
+      setAreas(areas.map(a => a.Area_id === areaId ? { ...a, risk_level: newRisk, is_admin_overridden: 1 } : a));
     } catch (err) {
       alert('Failed to update risk level');
     }
@@ -332,7 +332,7 @@ const Dashboard = () => {
                         color: getRiskColor(area.risk_level),
                         background: `${getRiskColor(area.risk_level)}20`
                       }}>
-                        {area.risk_level}
+                        {area.risk_level} {area.is_admin_overridden ? <span title="Manually overridden by admin">⚠️</span> : null}
                       </span>
                     </td>
                     <td style={{ padding: '0.75rem 1rem' }}>

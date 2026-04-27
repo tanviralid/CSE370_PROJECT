@@ -42,7 +42,9 @@ const SubmitReport = () => {
   const [step, setStep] = useState(1);
   const [selectedDivision, setSelectedDivision] = useState("");
   const [incidentDate, setIncidentDate] = useState("");
-  const [incidentTime, setIncidentTime] = useState("");
+  const [incidentHour, setIncidentHour] = useState("12");
+  const [incidentMinute, setIncidentMinute] = useState("00");
+  const [incidentPeriod, setIncidentPeriod] = useState("AM");
 
   const [formData, setFormData] = useState({
     crime_type: "",
@@ -70,6 +72,9 @@ const SubmitReport = () => {
     ? locationData[selectedDivision][formData.district]
     : [];
 
+  const hoursList = Array.from({ length: 12 }, (_, i) => String(i === 0 ? 12 : i).padStart(2, '0'));
+  const minutesList = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+
   const handleDivisionChange = (e) => {
     setSelectedDivision(e.target.value);
     setFormData({ ...formData, district: "", thana: "" });
@@ -92,25 +97,40 @@ const SubmitReport = () => {
     const dd = String(today.getDate()).padStart(2, '0');
     const currentDateStr = `${yyyy}-${mm}-${dd}`;
 
-    if (incidentDate > currentDateStr) {
+    if (!incidentDate) {
+      alert("Please select a date.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const todayDateObj = new Date(currentDateStr);
+    const selectedDateObj = new Date(incidentDate);
+    
+    if (selectedDateObj > todayDateObj) {
       alert("You cannot select a date in the future.");
       setIsSubmitting(false);
       return;
     }
 
+    // Convert 12h to 24h
+    let hour24 = parseInt(incidentHour, 10);
+    if (incidentPeriod === "PM" && hour24 !== 12) hour24 += 12;
+    if (incidentPeriod === "AM" && hour24 === 12) hour24 = 0;
+    
+    const hh = String(hour24).padStart(2, '0');
+    const min = incidentMinute;
+    const finalIncidentTime = `${incidentDate} ${hh}:${min}:00`;
+
     if (incidentDate === currentDateStr) {
-      const hh = String(today.getHours()).padStart(2, '0');
-      const min = String(today.getMinutes()).padStart(2, '0');
-      const currentTimeStr = `${hh}:${min}`;
-      if (incidentTime > currentTimeStr) {
+      const nowH = today.getHours();
+      const nowM = today.getMinutes();
+      if (hour24 > nowH || (hour24 === nowH && parseInt(min, 10) > nowM)) {
         alert("You cannot select a time in the future for today.");
         setIsSubmitting(false);
         return;
       }
     }
 
-    // Combine date and time for MySQL DATETIME format (YYYY-MM-DD HH:MM:SS)
-    const finalIncidentTime = `${incidentDate} ${incidentTime}:00`;
     const submissionData = { ...formData, incident_time: finalIncidentTime };
 
     try {
@@ -266,14 +286,20 @@ const SubmitReport = () => {
                   />
                 </div>
                 <div>
-                  <label><Clock size={16} /> Time</label>
-                  <input
-                    type="time"
-                    className="glass-input"
-                    value={incidentTime}
-                    max={incidentDate === todayDate ? currentTime : undefined}
-                    onChange={(e) => setIncidentTime(e.target.value)}
-                  />
+                  <label><Clock size={16} /> Time (Scroll to Select)</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <select className="glass-input" value={incidentHour} onChange={(e) => setIncidentHour(e.target.value)} style={{ padding: '0.5rem', appearance: 'none', textAlign: 'center' }}>
+                      {hoursList.map(h => <option key={`h-${h}`} value={h} style={{ color: 'black' }}>{h}</option>)}
+                    </select>
+                    <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>:</span>
+                    <select className="glass-input" value={incidentMinute} onChange={(e) => setIncidentMinute(e.target.value)} style={{ padding: '0.5rem', appearance: 'none', textAlign: 'center' }}>
+                      {minutesList.map(m => <option key={`m-${m}`} value={m} style={{ color: 'black' }}>{m}</option>)}
+                    </select>
+                    <select className="glass-input" value={incidentPeriod} onChange={(e) => setIncidentPeriod(e.target.value)} style={{ padding: '0.5rem', appearance: 'none', textAlign: 'center' }}>
+                      <option value="AM" style={{ color: 'black' }}>AM</option>
+                      <option value="PM" style={{ color: 'black' }}>PM</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -281,9 +307,9 @@ const SubmitReport = () => {
                 <button type="button" className="btn-secondary" onClick={handlePrev}>Back</button>
                 <button
                   type="button"
-                  className={`btn-primary ${(!formData.district || !formData.thana || !incidentDate || !incidentTime) ? "disabled-btn" : ""}`}
+                  className={`btn-primary ${(!formData.district || !formData.thana || !incidentDate) ? "disabled-btn" : ""}`}
                   onClick={handleNext}
-                  disabled={!formData.district || !formData.thana || !incidentDate || !incidentTime}
+                  disabled={!formData.district || !formData.thana || !incidentDate}
                 >
                   Continue to Evidence
                 </button>

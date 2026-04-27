@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { calculateAndUpdateRiskLevels } = require('../utils/riskEngine');
 
 // GET: Crime Trend Analytics Dashboard Stats
 router.get('/trends', async (req, res) => {
@@ -45,38 +46,9 @@ router.get('/trends', async (req, res) => {
 // GET: Automated Crime Density Risk Indicator
 router.get('/risk-levels', async (req, res) => {
     try {
-        const [recentCounts] = await db.query(`
-            SELECT area_id, COUNT(report_id) as recent_crimes
-            FROM Crime_report
-            WHERE incident_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-            GROUP BY area_id
-        `);
-
-        const updates = recentCounts.map(async (row) => {
-            let risk = 'Low';
-            if (row.recent_crimes > 10) {
-                risk = 'High';
-            } else if (row.recent_crimes > 3) {
-                risk = 'Moderate';
-            }
-
-            return db.query('UPDATE Area SET risk_level = ? WHERE Area_id = ?', [risk, row.area_id]);
-        });
-        
-        const recentAreaIds = recentCounts.map(r => r.area_id);
-        if (recentAreaIds.length > 0) {
-            updates.push(db.query(
-                'UPDATE Area SET risk_level = "Low" WHERE Area_id NOT IN (?)', 
-                [recentAreaIds]
-            ));
-        } else {
-            updates.push(db.query('UPDATE Area SET risk_level = "Low"'));
-        }
-
-        await Promise.all(updates);
+        await calculateAndUpdateRiskLevels();
         
         const [areas] = await db.query('SELECT Area_id, risk_level, district, thana FROM Area');
-        
         res.json({ message: 'Risk levels updated', areas });
     } catch (err) {
         console.error(err);
@@ -114,7 +86,7 @@ router.delete('/users/:userId', async (req, res) => {
 router.put('/area/:areaId/risk', async (req, res) => {
     const { risk_level } = req.body;
     try {
-        await db.query('UPDATE Area SET risk_level = ? WHERE Area_id = ?', [risk_level, req.params.areaId]);
+        await db.query('UPDATE Area SET risk_level = ?, is_admin_overridden = TRUE WHERE Area_id = ?', [risk_level, req.params.areaId]);
         res.json({ message: 'Risk level updated' });
     } catch (err) {
         console.error(err);
@@ -126,11 +98,11 @@ router.put('/area/:areaId/risk', async (req, res) => {
 router.get('/areas', async (req, res) => {
     try {
         const [rows] = await db.query(`
-            SELECT a.Area_id, a.district, a.thana, a.risk_level, 
+            SELECT a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden,
                    COUNT(c.report_id) as total_incidents
             FROM Area a
             LEFT JOIN Crime_report c ON a.Area_id = c.area_id
-            GROUP BY a.Area_id, a.district, a.thana, a.risk_level
+            GROUP BY a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden
             ORDER BY total_incidents DESC
         `);
         res.json(rows);

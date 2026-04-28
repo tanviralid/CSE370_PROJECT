@@ -14,10 +14,10 @@ router.get('/heatmap', async (req, res) => {
     try {
         // Dynamic Geographic Heat Intelligence Engine using simple aggregation
         const [rows] = await db.query(`
-            SELECT a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden, COUNT(c.report_id) as total_incidents
+            SELECT a.Area_id, a.district, a.thana, a.risk_level, COUNT(c.report_id) as total_incidents
             FROM Area a
             LEFT JOIN Crime_report c ON a.Area_id = c.area_id
-            GROUP BY a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden
+            GROUP BY a.Area_id, a.district, a.thana, a.risk_level
         `);
 
         res.json(rows);
@@ -97,10 +97,10 @@ router.get('/data/heatmap', async (req, res) => {
     try {
         // Dynamic Geographic Heat Intelligence Engine using simple aggregation
         const [rows] = await db.query(`
-            SELECT a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden, COUNT(c.report_id) as total_incidents
+            SELECT a.Area_id, a.district, a.thana, a.risk_level, COUNT(c.report_id) as total_incidents
             FROM Area a
             LEFT JOIN Crime_report c ON a.Area_id = c.area_id
-            GROUP BY a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden
+            GROUP BY a.Area_id, a.district, a.thana, a.risk_level
         `);
 
         res.json(rows);

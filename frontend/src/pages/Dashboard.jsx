@@ -64,15 +64,6 @@ const Dashboard = () => {
     }
   };
 
-  const handleRiskChange = async (areaId, newRisk) => {
-    try {
-      await axios.put(`http://localhost:5000/api/analytics/area/${areaId}/risk`, { risk_level: newRisk });
-      setAreas(areas.map(a => a.Area_id === areaId ? { ...a, risk_level: newRisk, is_admin_overridden: 1 } : a));
-    } catch (err) {
-      alert('Failed to update risk level');
-    }
-  };
-
   const handleDeleteReport = async (reportId) => {
     if (!window.confirm('Delete this report permanently?')) return;
     try {
@@ -314,7 +305,7 @@ const Dashboard = () => {
                   <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Thana</th>
                   <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Incidents</th>
                   <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Risk Level</th>
-                  <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Set Risk</th>
+
                 </tr>
               </thead>
               <tbody>
@@ -332,28 +323,10 @@ const Dashboard = () => {
                         color: getRiskColor(area.risk_level),
                         background: `${getRiskColor(area.risk_level)}20`
                       }}>
-                        {area.risk_level} {area.is_admin_overridden ? <span title="Manually overridden by admin">⚠️</span> : null}
+                        {area.risk_level}
                       </span>
                     </td>
-                    <td style={{ padding: '0.75rem 1rem' }}>
-                      <select
-                        value={area.risk_level}
-                        onChange={(e) => handleRiskChange(area.Area_id, e.target.value)}
-                        style={{
-                          padding: '0.35rem 0.5rem',
-                          background: 'rgba(255,255,255,0.08)',
-                          border: '1px solid rgba(255,255,255,0.15)',
-                          borderRadius: '6px',
-                          color: 'white',
-                          fontSize: '0.85rem',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <option value="Low" style={{ color: 'black' }}>Low</option>
-                        <option value="Moderate" style={{ color: 'black' }}>Moderate</option>
-                        <option value="High" style={{ color: 'black' }}>High</option>
-                      </select>
-                    </td>
+
                   </tr>
                 ))}
               </tbody>

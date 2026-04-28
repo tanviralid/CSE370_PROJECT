@@ -82,27 +82,15 @@ router.delete('/users/:userId', async (req, res) => {
     }
 });
 
-// PUT: Admin manually update area risk level
-router.put('/area/:areaId/risk', async (req, res) => {
-    const { risk_level } = req.body;
-    try {
-        await db.query('UPDATE Area SET risk_level = ?, is_admin_overridden = TRUE WHERE Area_id = ?', [risk_level, req.params.areaId]);
-        res.json({ message: 'Risk level updated' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
 // GET: All areas for admin management
 router.get('/areas', async (req, res) => {
     try {
         const [rows] = await db.query(`
-            SELECT a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden,
+            SELECT a.Area_id, a.district, a.thana, a.risk_level,
                    COUNT(c.report_id) as total_incidents
             FROM Area a
             LEFT JOIN Crime_report c ON a.Area_id = c.area_id
-            GROUP BY a.Area_id, a.district, a.thana, a.risk_level, a.is_admin_overridden
+            GROUP BY a.Area_id, a.district, a.thana, a.risk_level
             ORDER BY total_incidents DESC
         `);
         res.json(rows);

@@ -21,17 +21,17 @@ async function calculateAndUpdateRiskLevels() {
             }
         }
 
-        return db.query('UPDATE Area SET risk_level = ? WHERE district = ? AND is_admin_overridden = FALSE', [risk, row.district]);
+        return db.query('UPDATE Area SET risk_level = ? WHERE district = ?', [risk, row.district]);
     });
     
     const recentDistricts = districtCounts.map(r => r.district);
     if (recentDistricts.length > 0) {
         updates.push(db.query(
-            'UPDATE Area SET risk_level = "Low" WHERE district NOT IN (?) AND is_admin_overridden = FALSE', 
+            'UPDATE Area SET risk_level = "Low" WHERE district NOT IN (?)', 
             [recentDistricts]
         ));
     } else {
-        updates.push(db.query('UPDATE Area SET risk_level = "Low" WHERE is_admin_overridden = FALSE'));
+        updates.push(db.query('UPDATE Area SET risk_level = "Low"'));
     }
 
     await Promise.all(updates);

@@ -157,7 +157,7 @@ const Home = () => {
                       <div className="popup-stat">
                         <span>Risk Level:</span>
                         <strong style={{ color: getRiskColor(incident.risk_level) }}>
-                          {incident.risk_level} {incident.is_admin_overridden ? <span title="Manually overridden by admin">⚠️</span> : null}
+                          {incident.risk_level}
                         </strong>
                       </div>
                     </div>

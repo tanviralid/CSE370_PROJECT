@@ -44,6 +44,26 @@ router.post('/', async (req, res) => {
         }
 
         const areaStr = thana + ', ' + district;
+
+        // 2. Check for exact duplicate incident (same crime type, area, within 2 hours)
+        const [duplicateRows] = await db.query(
+            `SELECT tracking_id FROM Crime_report 
+             WHERE crime_type = ? 
+             AND area_id = ? 
+             AND incident_time >= DATE_SUB(?, INTERVAL 2 HOUR)
+             AND incident_time <= DATE_ADD(?, INTERVAL 2 HOUR)
+             LIMIT 1`,
+            [crime_type, area_id, incident_time, incident_time]
+        );
+
+        if (duplicateRows.length > 0) {
+            return res.status(200).json({
+                message: 'this report has already been submitted',
+                tracking_id: duplicateRows[0].tracking_id,
+                isDuplicate: true
+            });
+        }
+
         let groupId = null;
 
         // 2. Check for recent groups at this location (e.g., within 3 hours)

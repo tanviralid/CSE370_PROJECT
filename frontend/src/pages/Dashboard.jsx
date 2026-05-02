@@ -34,6 +34,7 @@ const Dashboard = () => {
         setStats({
           districtStats: trendsRes.data.districtStats || [],
           crimeTypes: trendsRes.data.crimeTypes || [],
+          monthlyTrends: trendsRes.data.monthlyTrends || [],
           overview: {
             total: trendsRes.data.districtStats.reduce((acc, curr) => acc + (curr.total_crimes || 0), 0),
             districts: trendsRes.data.districtStats.length,
@@ -41,7 +42,7 @@ const Dashboard = () => {
           }
         });
       } else {
-        setStats({ districtStats: [], crimeTypes: [], overview: { total: 0, districts: 0, crimeCategories: 0 } });
+        setStats({ districtStats: [], crimeTypes: [], monthlyTrends: [], overview: { total: 0, districts: 0, crimeCategories: 0 } });
       }
 
       setUsers(usersRes.data || []);
@@ -49,7 +50,7 @@ const Dashboard = () => {
       setLoading(false);
     } catch (err) {
       console.error("Admin dashboard error:", err);
-      setStats({ districtStats: [], crimeTypes: [], overview: { total: 0, districts: 0, crimeCategories: 0 } });
+      setStats({ districtStats: [], crimeTypes: [], monthlyTrends: [], overview: { total: 0, districts: 0, crimeCategories: 0 } });
       setLoading(false);
     }
   };
@@ -211,6 +212,39 @@ const Dashboard = () => {
                   ))
                 )}
               </div>
+            </div>
+          </div>
+
+          <div className="chart-card glass-panel" style={{ marginTop: '1.5rem' }}>
+            <div className="chart-header">
+              <Activity size={18} className="icon-accent" />
+              <h3>Monthly Crime Trends</h3>
+            </div>
+            <div className="bar-chart-container">
+              {!stats.monthlyTrends || stats.monthlyTrends.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>No data available</p>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', height: '180px', padding: '1rem 0' }}>
+                  {stats.monthlyTrends.map(stat => (
+                    <div key={stat.month} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, height: '100%' }}>
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', width: '100%', justifyContent: 'center' }}>
+                        <div
+                          className="bar-fill blue-gradient"
+                          style={{
+                            width: '50%',
+                            height: `${(stat.count / getMaxStat(stats.monthlyTrends, 'count')) * 100}%`,
+                            minHeight: '4px',
+                            borderRadius: '4px 4px 0 0',
+                            transition: 'height 1s ease-out'
+                          }}
+                        ></div>
+                      </div>
+                      <span style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: 'var(--text-muted)' }}>{stat.month}</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{stat.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

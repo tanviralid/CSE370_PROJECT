@@ -59,6 +59,7 @@ const SubmitReport = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [selectedFileName, setSelectedFileName] = useState('');
+  const [isDuplicate, setIsDuplicate] = useState(false);
   const navigate = useNavigate();
 
   const crimeTypes = [
@@ -138,6 +139,13 @@ const SubmitReport = () => {
       setTrackingId(res.data.tracking_id);
       setIsSubmitting(false);
       setStep(4);
+      if (res.data.isDuplicate) {
+          setIsDuplicate(true);
+          alert('this report has already been submitted');
+      } else {
+          setIsDuplicate(false);
+          alert('new report submitted');
+      }
     } catch (error) {
       console.error(error);
       setSubmitError(error.response?.data?.error || error.message || "Failed to connect to the secure server.");
@@ -380,8 +388,8 @@ const SubmitReport = () => {
           {step === 4 && (
             <div className="form-step success-step anim-fade-in">
               <CheckCircle size={64} className="icon-success mb-2" />
-              <h2>Report Secured</h2>
-              <p>Your incident has been securely logged into the Geographic Heat Engine.</p>
+              <h2>{isDuplicate ? 'Report Already Submitted' : 'Report Secured'}</h2>
+              <p>{isDuplicate ? 'This incident has already been reported. Here is the tracking ID of the previous submission.' : 'Your incident has been securely logged into the Geographic Heat Engine.'}</p>
 
               <div className="tracking-box">
                 <span>Your Secure Tracking ID</span>

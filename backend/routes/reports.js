@@ -135,7 +135,10 @@ router.get('/:trackingId', async (req, res) => {
     try {
         const [rows] = await db.query(
             `SELECT c.crime_type, c.incident_time, c.report_time, c.status, c.victim_witness, 
-                    a.district, a.thana, a.risk_level
+                    a.district, a.thana, a.risk_level,
+                    (SELECT COUNT(*) FROM Community_Vote cv WHERE cv.report_id = c.report_id AND cv.vote_type = 'Likely True') as votes_true,
+                    (SELECT COUNT(*) FROM Community_Vote cv WHERE cv.report_id = c.report_id AND cv.vote_type = 'Needs Verification') as votes_warning,
+                    (SELECT COUNT(*) FROM Community_Vote cv WHERE cv.report_id = c.report_id AND cv.vote_type = 'Suspicious') as votes_suspicious
              FROM Crime_report c
              LEFT JOIN Area a ON c.area_id = a.Area_id
              WHERE c.tracking_id = ?`,
@@ -173,7 +176,45 @@ router.post('/:trackingId/vote', async (req, res) => {
             [vote_type, reportId]
         );
 
-        res.json({ message: 'Vote submitted successfully' });
+        // --- Advanced Automated Community Moderation System ---
+        // Fetch all current votes for this report
+        const [voteStats] = await db.query(
+            `SELECT 
+                SUM(CASE WHEN vote_type = 'Suspicious' THEN 1 ELSE 0 END) as suspicious_count,
+                SUM(CASE WHEN vote_type = 'Likely True' THEN 1 ELSE 0 END) as true_count
+             FROM Community_Vote WHERE report_id = ?`,
+            [reportId]
+        );
+        
+        const suspCount = Number(voteStats[0].suspicious_count) || 0;
+        const trueCount = Number(voteStats[0].true_count) || 0;
+
+        // Auto-Reject Logic:
+        // 1. If NO likely true votes: reject if suspicious > 5
+        // 2. If HAS likely true votes: reject if suspicious is 2 more than likely true
+        const shouldReject = (trueCount === 0 && suspCount > 5) || (trueCount > 0 && suspCount >= trueCount + 2);
+
+        if (shouldReject) {
+            await db.query(`UPDATE Crime_report SET status = 'Rejected' WHERE report_id = ?`, [reportId]);
+        } 
+        // Auto-Progress if Likely True >= 2 AND not rejected
+        else if (trueCount >= 2) {
+            // Only update if it's currently Pending
+            await db.query(`UPDATE Crime_report SET status = 'In Progress' WHERE report_id = ? AND status = 'Pending'`, [reportId]);
+        }
+
+        // Return updated vote counts so the frontend can react immediately
+        const [voteCounts] = await db.query(
+            `SELECT 
+                (SELECT COUNT(*) FROM Community_Vote WHERE report_id = ? AND vote_type = 'Likely True') as votes_true,
+                (SELECT COUNT(*) FROM Community_Vote WHERE report_id = ? AND vote_type = 'Needs Verification') as votes_warning,
+                (SELECT COUNT(*) FROM Community_Vote WHERE report_id = ? AND vote_type = 'Suspicious') as votes_suspicious,
+                status
+             FROM Crime_report WHERE report_id = ?`,
+            [reportId, reportId, reportId, reportId]
+        );
+
+        res.json({ message: 'Vote submitted successfully', updatedVotes: voteCounts[0] });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });

@@ -31,8 +31,15 @@ const TrackStatus = () => {
 
   const handleVote = async (voteType) => {
     try {
-      await axios.post(`http://localhost:5000/api/reports/${trackingId}/vote`, { vote_type: voteType });
+      const res = await axios.post(`http://localhost:5000/api/reports/${trackingId}/vote`, { vote_type: voteType });
       setVoted(true);
+      
+      if (res.data.updatedVotes) {
+        setReport(prev => ({
+          ...prev,
+          ...res.data.updatedVotes
+        }));
+      }
     } catch (err) {
       console.error(err);
     }
@@ -100,6 +107,21 @@ const TrackStatus = () => {
               <div className="detail-item">
                 <span className="label">Area Risk Level</span>
                 <span className={`badge risk-${report.risk_level.toLowerCase()}`}>{report.risk_level}</span>
+              </div>
+            </div>
+
+            <div className="community-stats-container">
+              <h4 className="stats-title">Community Insights</h4>
+              <div className="community-stats">
+                <div className="stat-badge true">
+                  <ShieldCheck size={14} /> {report.votes_true || 0} Likely True
+                </div>
+                <div className="stat-badge warning">
+                  <AlertCircle size={14} /> {report.votes_warning || 0} Needs Info
+                </div>
+                <div className="stat-badge false">
+                  <AlertCircle size={14} /> {report.votes_suspicious || 0} Suspicious
+                </div>
               </div>
             </div>
 

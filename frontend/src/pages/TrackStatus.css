@@ -181,3 +181,53 @@
   color: #6ee7b7;
   padding: 1rem;
 }
+
+.community-stats-container {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stats-title {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.community-stats {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.stat-badge.true {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.stat-badge.warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.stat-badge.false {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}

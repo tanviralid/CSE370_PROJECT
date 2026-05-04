@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import PoliceDashboard from './pages/PoliceDashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import PublicDashboard from './pages/PublicDashboard';
 import 'leaflet/dist/leaflet.css';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/submit" element={<SubmitReport />} />
+            <Route path="/public-dashboard" element={<PublicDashboard />} />
             <Route path="/track" element={<TrackStatus />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/police" element={<PoliceDashboard />} />

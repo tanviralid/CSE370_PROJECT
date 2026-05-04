@@ -42,6 +42,10 @@ const Navbar = () => {
             <PlusCircle size={18} />
             <span>Report Crime</span>
           </Link>
+          <Link to="/public-dashboard" className={`nav-item ${isActive('/public-dashboard')}`}>
+            <BarChart2 size={18} />
+            <span>Community Feed</span>
+          </Link>
           <Link to="/track" className={`nav-item ${isActive('/track')}`}>
             <Search size={18} />
             <span>Track Status</span>

@@ -26,7 +26,7 @@ router.get('/heatmap', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
+//Yamin Feature-1
 // POST: Submit a new crime report (with Incident Grouping)
 router.post('/', async (req, res) => {
     const { crime_type, incident_time, victim_witness, district, thana } = req.body;
@@ -130,6 +130,24 @@ router.get('/data/heatmap', async (req, res) => {
     }
 });
 
+// GET: Public simplified reports
+router.get('/data/public', async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT c.tracking_id, c.crime_type, c.incident_time, 
+                   a.district, a.thana
+            FROM Crime_report c
+            LEFT JOIN Area a ON c.area_id = a.Area_id
+            WHERE c.status != 'Rejected'
+            ORDER BY c.incident_time DESC
+        `);
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // GET: Check report status
 router.get('/:trackingId', async (req, res) => {
     try {
@@ -155,7 +173,7 @@ router.get('/:trackingId', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
+//Yamin feature
 // POST: Community Verification Voting
 router.post('/:trackingId/vote', async (req, res) => {
     const { vote_type } = req.body; // 'Likely True', 'Needs Verification', 'Suspicious'
@@ -185,7 +203,7 @@ router.post('/:trackingId/vote', async (req, res) => {
              FROM Community_Vote WHERE report_id = ?`,
             [reportId]
         );
-        
+
         const suspCount = Number(voteStats[0].suspicious_count) || 0;
         const trueCount = Number(voteStats[0].true_count) || 0;
 
@@ -196,7 +214,7 @@ router.post('/:trackingId/vote', async (req, res) => {
 
         if (shouldReject) {
             await db.query(`UPDATE Crime_report SET status = 'Rejected' WHERE report_id = ?`, [reportId]);
-        } 
+        }
         // Auto-Progress if Likely True >= 2 AND not rejected
         else if (trueCount >= 2) {
             // Only update if it's currently Pending
